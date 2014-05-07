@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>D3 Seattle Crime Rate</title>
+</head>
+<script src="http://d3js.org/d3.v3.min.js"></script> 
+<!-- Include this if we want to use TopoJSON -->
+<!-- <script src="http://d3js.org/topojson.v1.min.js"></script> -->	
+<style>
+	path {
+		fill: gray;
+		stroke: black;
+		stroke-width: 0.5px;
+	}
+</style>
+<body>
+</body>
+<script>
+	var svg = d3.select("body")
+				.append("svg")
+				.attr("width", "1000px")
+				.attr("height", "750px")
+				.append("g")
+				.attr("transform", "translate (" + 4250 + ", " + 2250 + ")");
+
+	var projection = d3.geo.mercator().scale(2000);
+
+	var path = d3.geo.path()
+	    .projection(projection);
+
+	d3.json("geojson/WA.geo.json", function(data) {
+		console.log(data);
+		svg.selectAll("path")
+			.data(data.features)
+			.enter()
+			.append("path")
+			.attr("d", path);
+	});
+</script>
+</html>
