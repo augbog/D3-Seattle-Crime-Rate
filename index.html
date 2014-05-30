@@ -9,38 +9,64 @@ D3-Seattle-Crime-Rate
 	<meta charset="UTF-8">
 	<title>D3 Seattle Crime Rate</title>
 </head>
-<script src="http://d3js.org/d3.v3.min.js"></script> 
+<script src="scripts/d3.min.js"></script>
+<!-- <script src="http://d3js.org/d3.v3.min.js"></script>  -->
 <!-- Include this if we want to use TopoJSON -->
 <!-- <script src="http://d3js.org/topojson.v1.min.js"></script> -->	
 <style>
-	path {
-		fill: gray;
-		stroke: black;
-		stroke-width: 0.5px;
+	body {
+		width: 100%;
+		height: 100%;
 	}
+
 </style>
 <body>
-</body>
-<script>
+	<script>
+	var width = 1000,
+		height = 1000;
+
 	var svg = d3.select("body")
 				.append("svg")
-				.attr("width", "1000px")
-				.attr("height", "750px")
-				.append("g")
-				.attr("transform", "translate (" + 4250 + ", " + 2250 + ")");
+				.attr("width", width + "px")
+				.attr("height", height + "px");
 
-	var projection = d3.geo.mercator().scale(2000);
+	var g = svg.append("g");
 
-	var path = d3.geo.path()
-	    .projection(projection);
-
-	d3.json("geojson/WA.geo.json", function(data) {
+	d3.json("data/police_beat_zones.geo.json", function(data) {
 		console.log(data);
-		svg.selectAll("path")
+
+		var center = d3.geo.centroid(data)
+	    var scale  = 150;
+	    var offset = [width/2, height/2];
+	    var projection = d3.geo.mercator().scale(scale).center(center)
+	          .translate(offset);
+		
+		//create the path
+		var path = d3.geo.path().projection(projection);
+
+		// using the path determine the bounds of the current map and use 
+		// these to determine better values for the scale and translation
+		var bounds  = path.bounds(data);
+		var hscale  = scale*width  / (bounds[1][0] - bounds[0][0]);
+		var vscale  = scale*height / (bounds[1][1] - bounds[0][1]);
+		var scale   = (hscale < vscale) ? hscale : vscale;
+		var offset  = [width - (bounds[0][0] + bounds[1][0])/2,
+		                height - (bounds[0][1] + bounds[1][1])/2];
+
+		// new projection
+    	projection = d3.geo.mercator().center(center)
+        	.scale(scale).translate(offset);
+   		 path = path.projection(projection);
+		
+		g.selectAll("path")
 			.data(data.features)
 			.enter()
 			.append("path")
-			.attr("d", path);
+			.attr("d", path)
+			.attr("stroke", "black")
+			.attr("stroke-width", "5px")
+			.attr("fill-opacity", 0);
 	});
-</script>
+	</script>
+</body>
 </html>
