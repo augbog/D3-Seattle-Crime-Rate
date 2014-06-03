@@ -27,7 +27,7 @@
 	<meta charset="UTF-8">
 	<title>D3 Seattle Crime Rate</title>
 </head>
-<script src="../d3/d3.js"></script>
+<script src="scripts/d3.min.js"></script>
 <script src = "http://code.jquery.com/jquery-2.1.1.js"> </script>
 	
 <!-- <script src="http://d3js.org/d3.v3.min.js"></script>  -->
@@ -58,6 +58,12 @@
 	<div class = "Maps" id = "violentCrimeMap"> </div>
 	<div class = "Maps" id = "otherMap"> </div>
 		<script> 
+			d3.selection.prototype.moveToFront = function() {
+				return this.each(function() {
+					this.parentNode.appendChild(this);
+				});
+			};
+
 			//load the beats outline.  This is the element which specifies path
 			d3.xml("Beats.svg", "image/svg+xml", function(xml) {
 				var importedNode = document.importNode(xml.documentElement, true);
@@ -83,6 +89,11 @@
 			   				mouseX = e.pageX;
 			   				mouseY = e.pageY;
 			   			}
+			   			console.log("This is...");
+			   			console.log($this);
+
+			   			console.log("e is...")
+			   			console.log(e);
 			   			if(graphExists) {
 			   				graphs = d3.select("#graphs")
 			   				graphs.text("This will be a graph of Beat " + $this[0].id)
@@ -143,7 +154,7 @@
 
 	
 			//remembers which maps are already loaded
-			var maps = { };
+			var maps = {};
 			
 
 			//makes checkboxes into toggle functions
