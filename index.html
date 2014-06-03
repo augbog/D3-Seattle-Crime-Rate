@@ -30,43 +30,64 @@ D3-Seattle-Crime-Rate
 				.attr("width", width + "px")
 				.attr("height", height + "px");
 
-	var g = svg.append("g");
+	var projection = d3.geo.mercator()
+		.scale(1)
+		.translate([width/2, height/2]);
+
+	var path = d3.geo.path()
+	    .projection(projection);
+
+	//var g = svg.append("g");
+
 
 	d3.json("data/police_beat_zones.geo.json", function(data) {
-		console.log(data);
+// create a first guess for the projection
+      var center = d3.geo.centroid(data)
+      var scale  = 150;
+      var offset = [width/2, height/2];
+      var projection = d3.geo.mercator().scale(scale).center(center)
+          .translate(offset);
 
-		var center = d3.geo.centroid(data)
-	    var scale  = 150;
-	    var offset = [width/2, height/2];
-	    var projection = d3.geo.mercator().scale(scale).center(center)
-	          .translate(offset);
-		
-		//create the path
-		var path = d3.geo.path().projection(projection);
+      // create the path
+      var path = d3.geo.path().projection(projection);
 
-		// using the path determine the bounds of the current map and use 
-		// these to determine better values for the scale and translation
-		var bounds  = path.bounds(data);
-		var hscale  = scale*width  / (bounds[1][0] - bounds[0][0]);
-		var vscale  = scale*height / (bounds[1][1] - bounds[0][1]);
-		var scale   = (hscale < vscale) ? hscale : vscale;
-		var offset  = [width - (bounds[0][0] + bounds[1][0])/2,
-		                height - (bounds[0][1] + bounds[1][1])/2];
+      // using the path determine the bounds of the current map and use 
+      // these to determine better values for the scale and translation
+      var bounds  = path.bounds(data);
+      var hscale  = scale*width  / (bounds[1][0] - bounds[0][0]);
+      var vscale  = scale*height / (bounds[1][1] - bounds[0][1]);
+      var scale   = (hscale < vscale) ? hscale : vscale;
+      var offset  = [width - (bounds[0][0] + bounds[1][0])/2,
+                        height - (bounds[0][1] + bounds[1][1])/2];
 
-		// new projection
-    	projection = d3.geo.mercator().center(center)
-        	.scale(scale).translate(offset);
-   		 path = path.projection(projection);
-		
-		g.selectAll("path")
-			.data(data.features)
-			.enter()
-			.append("path")
-			.attr("d", path)
-			.attr("stroke", "black")
-			.attr("stroke-width", "5px")
-			.attr("fill-opacity", 0);
-	});
+      // new projection
+      projection = d3.geo.mercator().center(center)
+        .scale(scale).translate(offset);
+      path = path.projection(projection);
+
+      // add a rectangle to see the bound of the svg
+      svg.append("rect").attr('width', width).attr('height', height)
+        .style('stroke', 'blue').style('fill', 'none');
+
+      svg.selectAll("path").data(data.features).enter().append("path")
+        .attr("d", path)
+        .style("fill-opacity", 0)
+        .style("stroke-width", "1")
+        .style("stroke", "black")
+
+
+		// console.log(data);
+		// g.selectAll("path")
+		// 	.data(data.features)
+		// 	.enter()
+		// 	.append("path")
+		// 	.attr("d", path)
+		// 	.attr("stroke", "black")
+		// 	.attr("stroke-width", "1px")
+		// 	.attr("fill-opacity", 0);
+
+    });		
+
 	</script>
 </body>
 </html>
