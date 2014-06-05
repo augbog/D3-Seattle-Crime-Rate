@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<style>
+	
+	body {
+		font-family: helvetica, arial;
+	}
+
+	div {
+		margin-bottom: 10px;
+		font-size: 15pt;
+	}
+
+	.header {
+		font-size: 35pt;
+		text-align: center;
+	}
+	
+	.header h1 {
+		margin: 10px;
+	}
+
+	.header div {
+		font-size: 25pt;
+	}
+
+	#mainVisualization {
+		position: relative;
+		width: 2000px;
+		height: 800px;
+	}
+
+	.Maps {
+		width: 504;
+		height: 720;
+		top: 0px;
+		left: 0px;
+		position: absolute;
+	}
+
+	.Maps#BeatsMap {
+		margin-left: auto;
+		margin-right: auto;
+		z-index : 2;
+	}
+
+	#checkboxes {
+		position: absolute;
+		z-index: 3;
+	}
+
+	#googleMaps {
+		visibility: hidden;
+		position: absolute;
+		left: 700px;
+		top: 50px;
+		overflow: hidden;
+		width: 750px;
+		height: 750px;
+	}
+
+	div#contact_us {
+		margin-top: 50px;
+		text-align: center;
+	}
+	
+	div#contact_us div {
+		clear: both;
+	}
+
+	.profile_icon {
+		display: inline-block;
+		margin: 15px 0px 10px 15px;
+		border-radius: 150px;
+		-webkit-border-radius: 150px;
+	}
+
+	</style>
+	<meta charset="UTF-8">
+	<title>D3 Seattle Crime Rate</title>
+</head>
+<script src="scripts/d3.min.js"></script>
+<script src = "http://code.jquery.com/jquery-2.1.1.js"> </script>
+	
+<!-- <script src="http://d3js.org/d3.v3.min.js"></script>  -->
+<!-- Include this if we want to use TopoJSON -->
+<!-- <script src="http://d3js.org/topojson.v1.min.js"></script> -->	
+<body>
+	<div class="header">
+		<h1>D3 Seattle Crime Rate 2013</h1>
+		<div class="subheader">A data visualization of crime within the Seattle area in the year 2013.</div>
+	</div>
+	<div class="instructions">	
+		Hover over an area to see probability of crime and click to bring up a map of crime for that specific area. <br>
+		You can also toggle checkboxes to show different stats of Seattle overall.
+	</div>
+	<div id = "mainVisualization"> 
+		<div id = "checkboxes"> 
+			<input class="mapCheckboxes" type="checkbox" name="allCrime"> All Crime <br>
+			<input class="mapCheckboxes" type="checkbox" name="drug"> Drug <br>
+			<input class="mapCheckboxes" type="checkbox" name="non-theftPropertyCrime"> Non-Theft Property Crime <br>
+			<input class="mapCheckboxes" type="checkbox" name="publicDisturbance"> Public Disturbance <br>
+			<input class="mapCheckboxes" type="checkbox" name="theft"> Theft <br>
+			<input class="mapCheckboxes" type="checkbox" name="traffic"> Traffic <br>
+			<input class="mapCheckboxes" type="checkbox" name="vice"> Vice <br>
+			<input class="mapCheckboxes" type="checkbox" name="white-collarCrime"> White-Collar Crime <br>
+			<input class="mapCheckboxes" type="checkbox" name="violentCrime"> Violent Crime <br>
+			<input class="mapCheckboxes" type="checkbox" name="other"> Other <br>
+		</div>
+		<div id="googleMaps">
+			<h1></h1>
+			<iframe id="currentMap" src="" width="750px" height="750px"></iframe>
+		</div>
+		</div>
+		<!-- <div id="allSeattlePlotsDiv"> 
+			<h1 id="allSeattlePlots"> Overall Crime Patterns </h1>
+			<div id="crimeByMonth"> </div>
+			
+
+			<script> 
+				d3.xml("crimeByMonth.svg", "image/svg+xml", function(xml) {
+					var importedNode = document.importNode(xml.documentElement, true);
+					d3.select("#crimeByMonth").node().appendChild(importedNode);
+				});
+
+				$('#crimeByMonth g').mouseover(function(e) {
+					console.log("works")
+					//$this.style("stroke-width", 3);
+				})
+			</script>
+		</div>
+ 		-->
+	 	<div id="contact_us">
+	 		<div> 
+		 		<img src="img/alex.jpg" alt="" class="profile_icon"></img>
+		 		<img src="img/marie.jpg" alt="" class="profile_icon"></img>
+		 		<img src="img/aug.jpg" alt="" class="profile_icon"></img>
+		 	</div>
+		 	<div>Alex Gingras | Marie Clifford | Augustus Yuan</div>
+	 	</div>
+		<div id="references">
+	 		<p>All data retrieved from the following sources <a href="https://data.seattle.gov/Crime/Seattle-Police-Department-Beats/nnxn-434b" target="_blank">data.seattle.gov</a></p>
+		</div>
+	</body>
+
+	<script> 
+		//load the beats outline.  This is the element which specifies path
+		d3.xml("Maps/Beats.svg", "image/svg+xml", function(xml) {
+			var importedNode = document.importNode(xml.documentElement, true);
+			//put it into the div for it
+			d3.select("body").selectAll("#mainVisualization").append("div").attr("id", "BeatsMap").attr("class", "Maps").attr("z-index", 2);
+			d3.select("#BeatsMap").node().appendChild(importedNode);
+
+			//assign event functions
+			var mouseX = null;
+			var mouseY = null;
+			var graphExists = false;
+			//hover with wait function
+			//so it appears where your curser is, not where you go into the path
+			$('.Maps path').mousemove(function(e) {
+		   			mouseX = e.pageX;
+		   			mouseY = e.pageY;
+					})
+			//creats/moves the actual div with graphs
+					.mouseover(function(e) {
+					$this = $(this);
+		   			//creats a wait
+		   			console.log("data is...")
+		   			console.log($this.data);
+		   			$this.data("delay", setTimeout( function () {
+		   			if(mouseX == null || mouseY == null) {
+		   				mouseX = e.pageX;
+		   				mouseY = e.pageY;
+		   			}
+		   			if(graphExists) {
+		   				//EDIT HERE
+		   				graphs = d3.select("#graphs")
+		   				fileName = "graphs/" + $this[0].id + "_densitybarplots.svg"
+						d3.xml(fileName, "image/svg+xml", function(xml) {
+							var importedNode = document.importNode(xml.documentElement, true);
+							graphs.node().removeChild();
+							graphs.node().appendChild(importedNode)
+					});
+
+		   				graphs.style("left", mouseX +"px")
+			   				.style("top", mouseY +"px");
+
+		   			} else {
+		   				//EDIT HERE
+		   				fileName = "graphs/" + $this[0].id + "_densitybarplots.svg"
+
+			   			graphs = d3.select("body").append("div")
+
+						d3.xml(fileName, "image/svg+xml", function(xml) {
+							var importedNode = document.importNode(xml.documentElement, true);
+							graphs.node().appendChild(importedNode)
+						});
+
+						graphs.attr("id", "graphs")
+			   				.style("position", "absolute")
+			   				.style("left", mouseX +"px")
+			   				.style("top", mouseY +"px")
+			   				.style("z-index", 3)
+			   				.style("border-color", "black");
+			   			graphExists = true;
+			   		}
+		    	}, 1000));
+		   		//if you're just passing through, does nothing.
+				}).mouseleave(function () {
+				    $this = $(this);
+				    clearTimeout($this.data("delay"));
+				}).click(function() {
+					$('#googleMaps').css("visibility", "visible");
+					$this = $(this);
+					mapLink = "googlemaps_by_beat/" + $this[0].id + "_crime_map.html"
+					$('#currentMap').attr("src", mapLink);
+					$('#googleMaps > h1').text($this[0].id + " Area");
+				});
+				//.click function will go here
+
+				//removes the hover graph when you're not on the map
+				$(document).mousemove(function(e) {
+					documentThis = $(this);
+					var timer = documentThis.data("delay", setTimeout(function() {
+
+						paths = $('path')
+						graphDiv = $('#graphs')
+						if (!paths.is(e.target) && !graphDiv.is(e.target)) {
+							if (graphExists) {
+								d3.select("#graphs").remove();
+								graphExists = false;
+							}
+						}
+					}, 1000));
+				}).mousemove(function(e) {
+					documentThis = $(this)
+					clearTimeout(documentThis.data("delay"))
+					documentThis.data("delay", setTimeout(function() {
+
+						paths = $('path')
+						graphDiv = $('#graphs')
+						if (!paths.is(e.target) && !graphDiv.is(e.target)) {
+							if (graphExists) {
+								d3.select("#graphs").remove();
+								graphExists = false;
+							}
+						}
+					}, 1000));
+				})
+				
+		});
+
+		//get rid of graphs if you hover outside of a path
+
+
+		//remembers which maps are already loaded
+		var maps = { };
+		
+
+		//makes checkboxes into toggle functions
+		$('input[type=checkbox].mapCheckboxes').click(function() {
+
+			var currName = this.name;
+    		var svgName = "Maps/" + this.name + ".svg";
+    		//loads the file if unloaded
+    		if(!maps.hasOwnProperty(svgName)) {
+
+    			d3.xml(svgName, "image/svg+xml", function(xml) {
+				var importedNode = document.importNode(xml.documentElement, true);
+
+				maps[svgName] = importedNode;
+				
+				var divID = currName + "Map";
+
+				d3.select("body").select("#mainVisualization").append("div").attr("id", divID).attr("class", "Maps");
+
+				svgSelect = "#" + divID;
+
+				d3.select(svgSelect).node().appendChild(importedNode);
+
+				});
+    		//hides/makes visible if map is already loaded
+    		} else {
+    			if (maps[svgName].getAttribute("visibility") == "hidden") {
+    				maps[svgName].setAttribute("visibility", "visible");	
+    			} else {
+    				maps[svgName].setAttribute("visibility", "hidden");
+    			}
+    		}
+		});
+	</script>
+</html>
